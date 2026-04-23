@@ -1,12 +1,12 @@
 'use client'
 
+import { Suspense, useEffect } from 'react'
 import { ArrowLeft, Home, ShoppingCart } from 'lucide-react'
 import Link from 'next/link'
-import React, { useEffect } from 'react'
 import axios from 'axios'
 import { useSearchParams } from 'next/navigation'
 
-function OrderCancel() {
+function OrderCancelContent() {
   const searchParams = useSearchParams()
   const orderId = searchParams.get("orderId")
 
@@ -45,4 +45,10 @@ function OrderCancel() {
   )
 }
 
-export default OrderCancel
+export default function OrderCancelPage() {
+  return (
+    <Suspense fallback={<div className='flex min-h-screen items-center justify-center text-gray-600'>Loading...</div>}>
+      <OrderCancelContent />
+    </Suspense>
+  )
+}

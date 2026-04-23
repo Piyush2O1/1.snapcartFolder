@@ -1,5 +1,6 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+
+import { Suspense, useEffect, useState } from 'react'
 import { motion } from "motion/react"
 import { ArrowRight, CheckCircle, Home, Package } from 'lucide-react'
 import Link from 'next/link'
@@ -9,7 +10,7 @@ import { clearCart } from '@/redux/cartSlice'
 import axios from 'axios'
 import { useSearchParams } from 'next/navigation'
 
-function OrderSuccess() {
+function OrderSuccessContent() {
     const dispatch = useDispatch<AppDispatch>()
     const searchParams = useSearchParams()
     const sessionId = searchParams.get("session_id")
@@ -141,4 +142,10 @@ function OrderSuccess() {
     )
 }
 
-export default OrderSuccess
+export default function OrderSuccessPage() {
+    return (
+        <Suspense fallback={<div className='flex min-h-screen items-center justify-center text-gray-600'>Loading...</div>}>
+            <OrderSuccessContent />
+        </Suspense>
+    )
+}
