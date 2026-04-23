@@ -99,7 +99,7 @@ function CategorySlider() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.2 }}
                 transition={{ delay: index * 0.04, duration: 0.35 }}
-                onClick={() => router.push(`/user/dashboard?q=${encodeURIComponent(cat.name)}`)}
+                onClick={() => router.push(`/user/dashboard?category=${encodeURIComponent(cat.name)}`)}
                 className={`min-w-[220px] rounded-[28px] border border-white/80 bg-linear-to-br ${cat.accent} p-5 text-left shadow-[0_16px_44px_rgba(15,23,42,0.08)] transition hover:-translate-y-1 hover:shadow-[0_22px_54px_rgba(15,23,42,0.12)]`}
               >
                 <div className="mb-6 inline-flex rounded-2xl bg-white/80 p-3 text-emerald-700 shadow-sm">

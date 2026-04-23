@@ -17,7 +17,7 @@ async function UserDashboard({
   const plainGrocery = JSON.parse(JSON.stringify(groceryList)) as ClientGrocery[]
 
   return (
-    <div className="pb-16 sm:pb-20">
+    <main className="min-h-screen pb-16 pt-32 sm:pb-20">
       <HeroSection searchQuery={searchQuery} inventoryCount={plainGrocery.length} />
       <CategorySlider />
 
@@ -49,14 +49,14 @@ async function UserDashboard({
           </div>
           <p className="max-w-xl text-sm leading-7 text-slate-600 sm:text-base">
             {searchQuery
-              ? "These items match your current search and stay fully compatible with cart and checkout flows."
+              ? "These items match your current filter and stay fully compatible with cart and checkout flows."
               : "A more polished catalog layout with faster scanning, cleaner pricing, and sharper cart actions."}
           </p>
         </div>
 
         {plainGrocery.length === 0 ? (
           <div className="glass-panel-strong rounded-[32px] p-10 text-center">
-            <p className="font-display text-3xl font-bold text-slate-950">No groceries matched this search</p>
+            <p className="font-display text-3xl font-bold text-slate-950">No groceries matched this filter</p>
             <p className="mx-auto mt-3 max-w-xl text-slate-600">
               Try a different keyword or tap one of the featured categories above to reset the browsing flow.
             </p>
@@ -69,7 +69,7 @@ async function UserDashboard({
           </div>
         )}
       </section>
-    </div>
+    </main>
   )
 }
 

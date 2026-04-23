@@ -14,7 +14,7 @@ function HeroSection({ searchQuery, inventoryCount }: { searchQuery: string; inv
     : "Browse essentials, keep cart actions quick, and manage orders through a sharper, more polished customer experience."
 
   return (
-    <section className="mx-auto mt-32 w-[94%] max-w-7xl">
+    <section className="mx-auto w-[94%] max-w-7xl">
       <div className="relative overflow-hidden rounded-[36px] px-5 py-8 sm:px-8 sm:py-10 lg:px-10 lg:py-12">
         <div className="absolute inset-0 bg-[linear-gradient(135deg,#0f172a_0%,#14532d_48%,#f59e0b_130%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.14),transparent_20%),radial-gradient(circle_at_80%_0%,rgba(255,255,255,0.18),transparent_26%),radial-gradient(circle_at_60%_75%,rgba(16,185,129,0.28),transparent_24%)]" />
