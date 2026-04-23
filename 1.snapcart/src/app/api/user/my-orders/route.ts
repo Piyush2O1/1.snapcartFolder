@@ -10,7 +10,13 @@ export async function GET() {
         if(session?.user?.role!=="user"){
             return NextResponse.json({message:"user is not authenticated"},{status:403})
         }
-        const orders=await Order.find({user:session?.user?.id}).populate("user assignedDeliveryBoy").sort({createdAt:-1})
+        const orders=await Order.find({
+            user:session?.user?.id,
+            $or: [
+                { paymentMethod: "cod" },
+                { isPaid: true },
+            ],
+        }).populate("user assignedDeliveryBoy").sort({createdAt:-1})
         if(!orders){
             return NextResponse.json({message:"orders not found"},{status:400})
         }

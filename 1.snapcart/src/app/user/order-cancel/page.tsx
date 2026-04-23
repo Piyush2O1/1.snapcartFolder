@@ -2,9 +2,28 @@
 
 import { ArrowLeft, Home, ShoppingCart } from 'lucide-react'
 import Link from 'next/link'
-import React from 'react'
+import React, { useEffect } from 'react'
+import axios from 'axios'
+import { useSearchParams } from 'next/navigation'
 
 function OrderCancel() {
+  const searchParams = useSearchParams()
+  const orderId = searchParams.get("orderId")
+
+  useEffect(() => {
+    const cleanupCancelledOrder = async () => {
+      if (!orderId) return
+
+      try {
+        await axios.post("/api/user/payment/cancel", { orderId })
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
+    void cleanupCancelledOrder()
+  }, [orderId])
+
   return (
     <div className='flex min-h-screen flex-col items-center justify-center bg-linear-to-b from-red-50 to-white px-6 text-center'>
       <h1 className='text-3xl font-bold text-red-600'>Payment Cancelled</h1>

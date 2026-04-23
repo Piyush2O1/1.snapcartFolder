@@ -1,17 +1,49 @@
 'use client'
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { motion } from "motion/react"
 import { ArrowRight, CheckCircle, Home, Package } from 'lucide-react'
 import Link from 'next/link'
 import { useDispatch } from 'react-redux'
 import { AppDispatch } from '@/redux/store'
 import { clearCart } from '@/redux/cartSlice'
-function OrderSuccess() {
-    const dispatch=useDispatch<AppDispatch>()
+import axios from 'axios'
+import { useSearchParams } from 'next/navigation'
 
-    useEffect(()=>{
-        dispatch(clearCart())
-    },[dispatch])
+function OrderSuccess() {
+    const dispatch = useDispatch<AppDispatch>()
+    const searchParams = useSearchParams()
+    const sessionId = searchParams.get("session_id")
+    const orderId = searchParams.get("orderId")
+    const [paymentState, setPaymentState] = useState<"verifying" | "success" | "error">(
+        sessionId && orderId ? "verifying" : "success"
+    )
+    const [paymentError, setPaymentError] = useState("")
+
+    useEffect(() => {
+        const confirmOnlinePayment = async () => {
+            if (!sessionId || !orderId) {
+                dispatch(clearCart())
+                return
+            }
+
+            try {
+                await axios.post("/api/user/payment/confirm", { sessionId, orderId })
+                dispatch(clearCart())
+                setPaymentState("success")
+                setPaymentError("")
+            } catch (error) {
+                console.log(error)
+                setPaymentState("error")
+                if (axios.isAxiosError(error)) {
+                    setPaymentError(error.response?.data?.message || "We could not verify your payment yet.")
+                } else {
+                    setPaymentError("We could not verify your payment yet.")
+                }
+            }
+        }
+
+        void confirmOnlinePayment()
+    }, [dispatch, orderId, sessionId])
 
     return (
         <div className='flex flex-col items-center justify-center min-h-[80vh] px-6 text-center bg-linear-to-b from-green-50 to-white'>
@@ -45,7 +77,7 @@ function OrderSuccess() {
                 transition={{ duration: 0.4, delay: 0.3 }}
                 className='text-3xl md:text-4xl font-bold text-green-700 mt-6'
             >
-                Order Placed Successfully
+                {paymentState === "verifying" ? "Verifying Payment" : paymentState === "error" ? "Payment Verification Pending" : "Order Placed Successfully"}
             </motion.h1>
             <motion.p
                 initial={{ opacity: 0, y: 30 }}
@@ -53,8 +85,11 @@ function OrderSuccess() {
                 transition={{ duration: 0.4, delay: 0.6 }}
                 className='text-gray-600 mt-3 text-sm md:text-base max-w-md'
             >
-                Thank you for shopping with us! Your order has been placed and is being
-                processed. You can track its progress in your <span className="font-semibold text-green-700">My Orders</span> section.
+                {paymentState === "verifying"
+                    ? "We are confirming your online payment and syncing your order."
+                    : paymentState === "error"
+                        ? paymentError || "Your payment completed page opened, but we could not verify it yet. Please check My Orders once."
+                        : <>Thank you for shopping with us! Your order has been placed and is being processed. You can track its progress in your <span className="font-semibold text-green-700">My Orders</span> section.</>}
             </motion.p>
             <motion.div
                 initial={{ y: 40, opacity: 0 }}

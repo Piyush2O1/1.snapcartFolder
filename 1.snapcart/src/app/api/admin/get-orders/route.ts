@@ -15,7 +15,12 @@ export async function GET() {
                 {status:403}
             )
         }
-        const orders=await Order.find({})
+        const orders=await Order.find({
+            $or: [
+                { paymentMethod: "cod" },
+                { isPaid: true },
+            ],
+        })
             .populate({ path:"user", model:User })
             .populate({ path:"assignedDeliveryBoy", model:User })
             .populate({

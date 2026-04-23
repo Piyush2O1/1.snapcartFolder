@@ -6,15 +6,13 @@ import { useRouter } from 'next/navigation'
 import { useSelector } from 'react-redux'
 import { AppDispatch, RootState } from '@/redux/store'
 
-
 import axios from 'axios'
 
 import dynamic from 'next/dynamic'
 import { useDispatch } from 'react-redux'
 import { clearCart } from '@/redux/cartSlice'
 
-const CheckOutMap=dynamic(()=>import("@/components/CheckoutMap"),{ssr:false})
-
+const CheckOutMap = dynamic(() => import("@/components/CheckoutMap"), { ssr: false })
 
 type AddressForm = {
     fullName: string
@@ -34,19 +32,22 @@ const initialAddress: AddressForm = {
     fullAddress: ""
 }
 
-
 function Checkout() {
     const router = useRouter()
-    const dispatch=useDispatch<AppDispatch>()
+    const dispatch = useDispatch<AppDispatch>()
     const { userData } = useSelector((state: RootState) => state.user)
-      const { subTotal,deliveryFee,finalTotal,cartData } = useSelector((state: RootState) => state.cart)
+    const { subTotal, deliveryFee, finalTotal, cartData } = useSelector((state: RootState) => state.cart)
+
     const [address, setAddress] = useState<AddressForm>(initialAddress)
-    const [searchLoading,setSearchLoading]=useState(false)
-    const [searchQuery,setSearchQuery]=useState("")
+    const [searchLoading, setSearchLoading] = useState(false)
+    const [searchQuery, setSearchQuery] = useState("")
     const [position, setPosition] = useState<[number, number] | null>(null)
-  const [paymentMethod,setPaymentMethod]=useState<"cod" | "online">("cod")
+    const [paymentMethod, setPaymentMethod] = useState<"cod" | "online">("cod")
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [checkoutError, setCheckoutError] = useState("")
+
     useEffect(() => {
-        if(cartData.length===0){
+        if (cartData.length === 0) {
             router.replace("/user/cart")
         }
     }, [cartData.length, router])
@@ -59,6 +60,7 @@ function Checkout() {
             }, (err) => { console.log('location error', err) }, { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 })
         }
     }, [])
+
     useEffect(() => {
         if (userData) {
             setAddress((prev) => ({
@@ -69,129 +71,120 @@ function Checkout() {
         }
     }, [userData])
 
- 
-    
-
-
-    const handleSearchQuery=async ()=>{
+    const handleSearchQuery = async () => {
         setSearchLoading(true)
-        const {OpenStreetMapProvider}=await import("leaflet-geosearch")
-const provider=new OpenStreetMapProvider()
-const results = await provider.search({ query: searchQuery });
-if(results){
-    setSearchLoading(false)
-setPosition([results[0].y,results[0].x])
-}
-
-    }
-
-    useEffect(()=>{
-     const fetchAddress=async ()=>{
-        if(!position)return 
         try {
-            const result=await axios.get(`https://nominatim.openstreetmap.org/reverse?lat=${position[0]}&lon=${position[1]}&format=json`)
-            console.log(result.data)
-            const resolvedAddress = result.data?.address ?? {}
-
-            setAddress(prev=>({...prev,
-                city: resolvedAddress.city || resolvedAddress.town || resolvedAddress.village || "",
-                state: resolvedAddress.state || "",
-                pincode: resolvedAddress.postcode || "",
-                fullAddress: result.data?.display_name || ""
-            }))
+            const { OpenStreetMapProvider } = await import("leaflet-geosearch")
+            const provider = new OpenStreetMapProvider()
+            const results = await provider.search({ query: searchQuery })
+            if (results?.length) {
+                setPosition([results[0].y, results[0].x])
+            }
         } catch (error) {
             console.log(error)
+        } finally {
+            setSearchLoading(false)
         }
-     }
-     fetchAddress()
-    },[position])
-
-const handleCod=async ()=>{
-    if(!position || cartData.length===0){
-        return null
     }
-    try {
-       await axios.post("/api/user/order",{
-        userId:userData?._id,
-        items:cartData.map(item=>(
-            {
-                grocery:item._id,
-                name:item.name,
-                price:item.price,
-                unit:item.unit,
-                quantity:item.quantity,
-                image:item.image
+
+    useEffect(() => {
+        const fetchAddress = async () => {
+            if (!position) return
+            try {
+                const result = await axios.get(`https://nominatim.openstreetmap.org/reverse?lat=${position[0]}&lon=${position[1]}&format=json`)
+                const resolvedAddress = result.data?.address ?? {}
+
+                setAddress(prev => ({
+                    ...prev,
+                    city: resolvedAddress.city || resolvedAddress.town || resolvedAddress.village || "",
+                    state: resolvedAddress.state || "",
+                    pincode: resolvedAddress.postcode || "",
+                    fullAddress: result.data?.display_name || ""
+                }))
+            } catch (error) {
+                console.log(error)
             }
-        )),
-        totalAmount:finalTotal,
-        address:{
-            fullName:address.fullName,
-            mobile:address.mobile,
-            city:address.city,
-            state:address.state,
-            fullAddress:address.fullAddress,
-            pincode:address.pincode,
-            latitude:position[0],
-            longitude:position[1]
+        }
+        void fetchAddress()
+    }, [position])
+
+    const buildPayload = () => ({
+        userId: userData?._id,
+        items: cartData.map(item => ({
+            grocery: item._id,
+            name: item.name,
+            price: item.price,
+            unit: item.unit,
+            quantity: item.quantity,
+            image: item.image
+        })),
+        totalAmount: finalTotal,
+        address: {
+            fullName: address.fullName,
+            mobile: address.mobile,
+            city: address.city,
+            state: address.state,
+            fullAddress: address.fullAddress,
+            pincode: address.pincode,
+            latitude: position?.[0],
+            longitude: position?.[1]
         },
         paymentMethod
-       })
-       
-       dispatch(clearCart())
-       router.replace("/user/orders/success")
-    } catch (error) {
-        console.log(error)
-    }
-}
+    })
 
-const handleOnlinePayment=async ()=>{
-      if(!position || cartData.length===0){
-        return null
-    }
-    try {
-        const result=await axios.post("/api/user/payment",{
-        userId:userData?._id,
-        items:cartData.map(item=>(
-            {
-                grocery:item._id,
-                name:item.name,
-                price:item.price,
-                unit:item.unit,
-                quantity:item.quantity,
-                image:item.image
+    const handleCod = async () => {
+        if (!position || cartData.length === 0) {
+            return null
+        }
+
+        try {
+            setIsSubmitting(true)
+            setCheckoutError("")
+            await axios.post("/api/user/order", buildPayload())
+
+            dispatch(clearCart())
+            router.replace("/user/orders/success")
+        } catch (error) {
+            console.log(error)
+            if (axios.isAxiosError(error)) {
+                setCheckoutError(error.response?.data?.message || "Could not place your order.")
+            } else {
+                setCheckoutError("Could not place your order.")
             }
-        )),
-        totalAmount:finalTotal,
-        address:{
-            fullName:address.fullName,
-            mobile:address.mobile,
-            city:address.city,
-            state:address.state,
-            fullAddress:address.fullAddress,
-            pincode:address.pincode,
-            latitude:position[0],
-            longitude:position[1]
-        },
-        paymentMethod
-       })
-       window.location.href=result.data.url
-    } catch (error) {
-        console.log(error)
+        } finally {
+            setIsSubmitting(false)
+        }
     }
-}
 
+    const handleOnlinePayment = async () => {
+        if (!position || cartData.length === 0) {
+            return null
+        }
 
+        try {
+            setIsSubmitting(true)
+            setCheckoutError("")
+            const result = await axios.post("/api/user/payment", buildPayload())
+            window.location.href = result.data.url
+        } catch (error) {
+            console.log(error)
+            if (axios.isAxiosError(error)) {
+                setCheckoutError(error.response?.data?.message || "Could not start online payment.")
+            } else {
+                setCheckoutError("Could not start online payment.")
+            }
+            setIsSubmitting(false)
+        }
+    }
 
- const handleCurrentLocation=()=>{
-  if (navigator.geolocation) {
+    const handleCurrentLocation = () => {
+        if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition((pos) => {
                 const { latitude, longitude } = pos.coords
                 setPosition([latitude, longitude])
             }, (err) => { console.log('location error', err) }, { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 })
         }
- }
-
-
+    }
 
     return (
         <div className='w-[92%] md:w-[80%] mx-auto py-10 relative'>
@@ -228,94 +221,103 @@ const handleOnlinePayment=async ()=>{
                         </div>
                         <div className='relative'>
                             <Phone className="absolute left-3 top-3 text-green-600" size={18} />
-                            <input type="text" value={address.mobile ?? ""} onChange={(e) => setAddress((prev) => ({ ...prev, mobile:  e.target.value  }))} className='pl-10 w-full border rounded-lg p-3 text-sm bg-gray-50' />
+                            <input type="text" value={address.mobile ?? ""} onChange={(e) => setAddress((prev) => ({ ...prev, mobile: e.target.value }))} className='pl-10 w-full border rounded-lg p-3 text-sm bg-gray-50' />
                         </div>
                         <div className='relative'>
                             <Home className="absolute left-3 top-3 text-green-600" size={18} />
-                            <input type="text" value={address.fullAddress ?? ""} placeholder='Full Address' onChange={(e) => setAddress((prev) => ({ ...prev, fullAddress: e.target.value  }))} className='pl-10 w-full border rounded-lg p-3 text-sm bg-gray-50' />
+                            <input type="text" value={address.fullAddress ?? ""} placeholder='Full Address' onChange={(e) => setAddress((prev) => ({ ...prev, fullAddress: e.target.value }))} className='pl-10 w-full border rounded-lg p-3 text-sm bg-gray-50' />
                         </div>
                         <div className='grid grid-cols-3 gap-3'>
                             <div className='relative'>
                                 <Building className="absolute left-3 top-3 text-green-600" size={18} />
-                                <input type="text" value={address.city ?? ""} placeholder='city' onChange={(e) => setAddress((prev) => ({ ...prev, city:  e.target.value  }))} className='pl-10 w-full border rounded-lg p-3 text-sm bg-gray-50' />
+                                <input type="text" value={address.city ?? ""} placeholder='city' onChange={(e) => setAddress((prev) => ({ ...prev, city: e.target.value }))} className='pl-10 w-full border rounded-lg p-3 text-sm bg-gray-50' />
                             </div>
                             <div className='relative'>
                                 <Navigation className="absolute left-3 top-3 text-green-600" size={18} />
-                                <input type="text" value={address.state ?? ""} placeholder='state' onChange={(e) => setAddress((prev) => ({ ...prev, state:  e.target.value  }))} className='pl-10 w-full border rounded-lg p-3 text-sm bg-gray-50' />
+                                <input type="text" value={address.state ?? ""} placeholder='state' onChange={(e) => setAddress((prev) => ({ ...prev, state: e.target.value }))} className='pl-10 w-full border rounded-lg p-3 text-sm bg-gray-50' />
                             </div>
                             <div className='relative'>
                                 <Search className="absolute left-3 top-3 text-green-600" size={18} />
-                                <input type="text" value={address.pincode ?? ""} placeholder='pincode' onChange={(e) => setAddress((prev) => ({ ...prev, pincode:  e.target.value  }))} className='pl-10 w-full border rounded-lg p-3 text-sm bg-gray-50' />
+                                <input type="text" value={address.pincode ?? ""} placeholder='pincode' onChange={(e) => setAddress((prev) => ({ ...prev, pincode: e.target.value }))} className='pl-10 w-full border rounded-lg p-3 text-sm bg-gray-50' />
                             </div>
                         </div>
                         <div className='flex gap-2 mt-3'>
-                            <input type="text" placeholder='search city or area...' className='flex-1 border rounded-lg p-3 text-sm focus:ring-2 focus:ring-green-500 outline-none' value={searchQuery} onChange={(e)=>setSearchQuery(e.target.value)}/>
-                            <button className='bg-green-600 text-white px-5 rounded-lg hover:bg-green-700 transition-all font-medium' onClick={handleSearchQuery}>{searchLoading?<Loader2 size={16} className='animate-spin'/>:"Search"}</button>
+                            <input type="text" placeholder='search city or area...' className='flex-1 border rounded-lg p-3 text-sm focus:ring-2 focus:ring-green-500 outline-none' value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                            <button className='bg-green-600 text-white px-5 rounded-lg hover:bg-green-700 transition-all font-medium' onClick={handleSearchQuery}>
+                                {searchLoading ? <Loader2 size={16} className='animate-spin' /> : "Search"}
+                            </button>
                         </div>
                         <div className='relative mt-6 h-[330px] rounded-xl overflow-hidden border border-gray-200 shadow-inner'>
-                            {position &&  <CheckOutMap position={position} setPosition={setPosition}/>}
-                              <motion.button
-                              whileTap={{scale:0.93}}
-                              className='absolute bottom-4 right-4 bg-green-600 text-white shadow-lg rounded-full p-3 hover:bg-green-700 transition-all flex items-center justify-center z-999'
-                              onClick={handleCurrentLocation}
-                              >
-                               <LocateFixed size={22}/>
-                                </motion.button> 
+                            {position && <CheckOutMap position={position} setPosition={setPosition} />}
+                            <motion.button
+                                whileTap={{ scale: 0.93 }}
+                                className='absolute bottom-4 right-4 bg-green-600 text-white shadow-lg rounded-full p-3 hover:bg-green-700 transition-all flex items-center justify-center z-999'
+                                onClick={handleCurrentLocation}
+                            >
+                                <LocateFixed size={22} />
+                            </motion.button>
                         </div>
                     </div>
                 </motion.div>
                 <motion.div
-                 initial={{ opacity: 0, x: 20 }}
+                    initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.3 }}
                     className='bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 h-fit'
                 >
-                    <h2 className='text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2'><CreditCard className='text-green-600'/> Payment Method</h2>
+                    <h2 className='text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2'><CreditCard className='text-green-600' /> Payment Method</h2>
                     <div className='space-y-4 mb-6'>
-                       <button 
-                       onClick={()=>setPaymentMethod("online")}
-                       className={`flex items-center gap-3 w-full border rounded-lg p-3 transition-all ${
-                paymentMethod === "online"
-                  ? "border-green-600 bg-green-50 shadow-sm"
-                  : "hover:bg-gray-50"
-              }`}>
-                        <CreditCardIcon className='text-green-600'/><span className='font-medium text-gray-700'>Pay Online (stripe)</span>
-                       </button>
-                       <button 
-                        onClick={()=>setPaymentMethod("cod")}
-                       className={`flex items-center gap-3 w-full border rounded-lg p-3 transition-all ${
-                paymentMethod === "cod"
-                  ? "border-green-600 bg-green-50 shadow-sm"
-                  : "hover:bg-gray-50"
-              }`}>
-                        <Truck className='text-green-600'/><span className='font-medium text-gray-700'>Cash on Delivery</span>
-                       </button>
+                        <button
+                            onClick={() => setPaymentMethod("online")}
+                            className={`flex items-center gap-3 w-full border rounded-lg p-3 transition-all ${paymentMethod === "online"
+                                ? "border-green-600 bg-green-50 shadow-sm"
+                                : "hover:bg-gray-50"
+                                }`}>
+                            <CreditCardIcon className='text-green-600' /><span className='font-medium text-gray-700'>Pay Online (stripe)</span>
+                        </button>
+                        <button
+                            onClick={() => setPaymentMethod("cod")}
+                            className={`flex items-center gap-3 w-full border rounded-lg p-3 transition-all ${paymentMethod === "cod"
+                                ? "border-green-600 bg-green-50 shadow-sm"
+                                : "hover:bg-gray-50"
+                                }`}>
+                            <Truck className='text-green-600' /><span className='font-medium text-gray-700'>Cash on Delivery</span>
+                        </button>
                     </div>
                     <div className='border-t pt-4 text-gray-700 space-y-2 text-sm sm:text-base'>
                         <div className='flex justify-between'>
                             <span className='font-semibold'>Subtotal</span>
-                            <span className='font-semibold text-green-600'>₹{subTotal}</span>
+                            <span className='font-semibold text-green-600'>â‚¹{subTotal}</span>
                         </div>
                         <div className='flex justify-between'>
                             <span className='font-semibold'>Delivery Fee</span>
-                            <span className='font-semibold text-green-600'>₹{deliveryFee}</span>
+                            <span className='font-semibold text-green-600'>â‚¹{deliveryFee}</span>
                         </div>
-                      <div className='flex justify-between font-bold text-lg border-t pt-3'>
+                        <div className='flex justify-between font-bold text-lg border-t pt-3'>
                             <span>Final Total</span>
-                            <span className='font-semibold text-green-600'>₹{finalTotal}</span>
+                            <span className='font-semibold text-green-600'>â‚¹{finalTotal}</span>
                         </div>
                     </div>
-                    <motion.button whileTap={{scale:0.93}} className='w-full mt-6 bg-green-600 text-white py-3 rounded-full hover:bg-green-700 transition-all font-semibold'
-                    onClick={()=>{
-                        if(paymentMethod=="cod"){
-                            handleCod()
-                        }else{
-                           handleOnlinePayment()
-                        }
-                    }}
-                    >
-{paymentMethod=="cod"?"Place Order":"pay & Place Order"}
 
+                    {checkoutError && (
+                        <div className='mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700'>
+                            {checkoutError}
+                        </div>
+                    )}
+
+                    <motion.button
+                        whileTap={{ scale: 0.93 }}
+                        className='w-full mt-6 bg-green-600 text-white py-3 rounded-full hover:bg-green-700 transition-all font-semibold disabled:cursor-not-allowed disabled:opacity-60'
+                        disabled={isSubmitting}
+                        onClick={() => {
+                            if (paymentMethod == "cod") {
+                                void handleCod()
+                            } else {
+                                void handleOnlinePayment()
+                            }
+                        }}
+                    >
+                        {isSubmitting ? "Please wait..." : paymentMethod == "cod" ? "Place Order" : "pay & Place Order"}
                     </motion.button>
                 </motion.div>
             </div>
