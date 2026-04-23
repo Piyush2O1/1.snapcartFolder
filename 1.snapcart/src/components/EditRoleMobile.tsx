@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
 import { ArrowRight, Bike, ShieldCheck, User } from 'lucide-react'
 import axios from 'axios'
+import { AxiosError } from 'axios'
 
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
@@ -22,6 +23,8 @@ function EditRoleMobile() {
   ])
   const [selectedRole, setSelectedRole] = useState("")
   const [mobile, setMobile] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
   const { update } = useSession()
   const dispatch = useDispatch<AppDispatch>()
 
@@ -29,6 +32,8 @@ function EditRoleMobile() {
 
   const handleEdit = async () => {
     try {
+      setLoading(true)
+      setErrorMessage("")
       const result = await axios.post("/api/user/edit-role-mobile", {
         role: selectedRole,
         mobile,
@@ -40,6 +45,13 @@ function EditRoleMobile() {
       router.refresh()
     } catch (error) {
       console.log(error)
+      const message =
+        error instanceof AxiosError
+          ? error.response?.data?.message || error.message
+          : "We could not save your profile right now."
+      setErrorMessage(message)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -129,21 +141,30 @@ function EditRoleMobile() {
               onChange={(e) => setMobile(e.target.value.replace(/\D/g, "").slice(0, 10))}
               value={mobile}
             />
+            <p className="mt-3 text-sm text-slate-500">
+              Use a 10-digit mobile number so delivery updates and OTP verification work correctly.
+            </p>
           </motion.div>
+
+          {errorMessage && (
+            <div className="mx-auto mt-6 max-w-xl rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+              {errorMessage}
+            </div>
+          )}
 
           <motion.button
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.45, duration: 0.4 }}
-            disabled={mobile.length !== 10 || !selectedRole}
+            disabled={mobile.length !== 10 || !selectedRole || loading}
             className={`mx-auto mt-10 inline-flex items-center gap-2 rounded-full px-7 py-3.5 font-semibold transition ${
-              selectedRole && mobile.length === 10
+              selectedRole && mobile.length === 10 && !loading
                 ? "bg-slate-950 text-white hover:bg-emerald-700"
                 : "bg-slate-200 text-slate-500"
             }`}
             onClick={() => void handleEdit()}
           >
-            Go to dashboard
+            {loading ? "Saving profile..." : "Go to dashboard"}
             <ArrowRight className="h-4 w-4" />
           </motion.button>
         </div>

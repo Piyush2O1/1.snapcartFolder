@@ -2,7 +2,7 @@ type ErrorWithCode = Error & {
   code?: string
 }
 
-const transientDbCodes = new Set(["ECONNREFUSED", "ENOTFOUND", "ETIMEOUT"])
+const transientDbCodes = new Set(["ECONNREFUSED", "ENOTFOUND", "ETIMEOUT", "ETIMEDOUT"])
 
 export function isDatabaseUnavailable(error: unknown) {
   if (!(error instanceof Error)) {
@@ -13,6 +13,6 @@ export function isDatabaseUnavailable(error: unknown) {
 
   return (
     transientDbCodes.has(code || "") ||
-    /querySrv|server selection|connection/i.test(error.message)
+    /querySrv|server selection|connection|ETIMEDOUT|timed out/i.test(error.message)
   )
 }

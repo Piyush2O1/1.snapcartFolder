@@ -32,6 +32,19 @@ const initialAddress: AddressForm = {
     fullAddress: ""
 }
 
+const validateCheckoutForm = (address: AddressForm, position: [number, number] | null) => {
+    if (!address.fullName.trim()) return "Please enter the delivery name."
+    if (!address.mobile.trim()) return "Please enter the mobile number."
+    if (!/^\d{10}$/.test(address.mobile.trim())) return "Please enter a valid 10-digit mobile number."
+    if (!address.fullAddress.trim()) return "Please enter the full delivery address."
+    if (!address.city.trim()) return "Please enter the city."
+    if (!address.state.trim()) return "Please enter the state."
+    if (!address.pincode.trim()) return "Please enter the pincode."
+    if (!/^\d{6}$/.test(address.pincode.trim())) return "Please enter a valid 6-digit pincode."
+    if (!position) return "Please choose a delivery location on the map."
+    return null
+}
+
 function Checkout() {
     const router = useRouter()
     const dispatch = useDispatch<AppDispatch>()
@@ -171,6 +184,12 @@ function Checkout() {
             return null
         }
 
+        const validationError = validateCheckoutForm(address, position)
+        if (validationError) {
+            setCheckoutError(validationError)
+            return null
+        }
+
         try {
             setIsSubmitting(true)
             setCheckoutError("")
@@ -192,6 +211,12 @@ function Checkout() {
 
     const handleOnlinePayment = async () => {
         if (!position || cartData.length === 0) {
+            return null
+        }
+
+        const validationError = validateCheckoutForm(address, position)
+        if (validationError) {
+            setCheckoutError(validationError)
             return null
         }
 
@@ -282,7 +307,7 @@ function Checkout() {
                         </div>
                         <div className='flex gap-2 mt-3'>
                             <input type="text" placeholder='search city or area...' className='flex-1 border rounded-lg p-3 text-sm focus:ring-2 focus:ring-green-500 outline-none' value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                            <button className='bg-green-600 text-white px-5 rounded-lg hover:bg-green-700 transition-all font-medium' onClick={handleSearchQuery}>
+                            <button type="button" className='bg-green-600 text-white px-5 rounded-lg hover:bg-green-700 transition-all font-medium' onClick={handleSearchQuery}>
                                 {searchLoading ? <Loader2 size={16} className='animate-spin' /> : "Search"}
                             </button>
                         </div>
@@ -291,6 +316,7 @@ function Checkout() {
                             <motion.button
                                 whileTap={{ scale: 0.93 }}
                                 className='absolute bottom-4 right-4 bg-green-600 text-white shadow-lg rounded-full p-3 hover:bg-green-700 transition-all flex items-center justify-center z-999'
+                                type="button"
                                 onClick={handleCurrentLocation}
                             >
                                 <LocateFixed size={22} />

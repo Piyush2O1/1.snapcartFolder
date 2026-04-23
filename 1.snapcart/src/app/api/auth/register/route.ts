@@ -1,4 +1,5 @@
 import connectDb from "@/lib/db";
+import { isDatabaseUnavailable } from "@/lib/dbError";
 import User from "@/models/user.model";
 import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
@@ -7,33 +8,51 @@ export async function POST(req:NextRequest) {
     try {
       await connectDb()
       const {name,email,password}=await req.json()
-    const existUser=await User.findOne({email})
-    if(existUser){
+    const trimmedName=String(name || "").trim()
+    const trimmedEmail=String(email || "").trim().toLowerCase()
+    const rawPassword=String(password || "")
+
+    if(!trimmedName || !trimmedEmail || !rawPassword){
         return NextResponse.json(
-            {message:"email already exist!"},
+            {message:"name, email, and password are required"},
             {status:400}
         )
     }
-   if(password.length<6){
+
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)){
+        return NextResponse.json(
+            {message:"please enter a valid email address"},
+            {status:400}
+        )
+    }
+
+    const existUser=await User.findOne({email:trimmedEmail})
+    if(existUser){
+        return NextResponse.json(
+            {message:"an account with this email already exists"},
+            {status:400}
+        )
+    }
+   if(rawPassword.length<6){
     return NextResponse.json(
             {message:"password must be at least 6 characters"},
             {status:400}
         )
    }
 
-   const hashedPassword=await bcrypt.hash(password,10)
-   const user=await User.create({
-    name,email,password:hashedPassword
+   const hashedPassword=await bcrypt.hash(rawPassword,10)
+   await User.create({
+    name:trimmedName,email:trimmedEmail,password:hashedPassword
    })
     return NextResponse.json(
-            user,
-            {status:200}
+            {message:"account created successfully"},
+            {status:201}
         )
         
     } catch (error) {
          return NextResponse.json(
-            {message:`register error ${error}`},
-            {status:500}
+            {message:isDatabaseUnavailable(error) ? "database is unavailable" : `register error ${error}`},
+            {status:isDatabaseUnavailable(error) ? 503 : 500}
         )
     }
 }

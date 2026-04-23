@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { getProviders, signIn } from 'next-auth/react'
 import React, { useEffect, useState } from 'react'
 
-function GoogleSignInButton() {
+function GoogleSignInButton({ callbackUrl = "/auth/redirect" }: { callbackUrl?: string }) {
   const [enabled, setEnabled] = useState(false)
 
   useEffect(() => {
@@ -38,7 +38,7 @@ function GoogleSignInButton() {
       <button
         type='button'
         className='flex w-full items-center justify-center gap-3 rounded-full border border-white/80 bg-white/78 py-3 text-slate-700 font-medium transition-all duration-200 hover:bg-white'
-        onClick={() => signIn("google", { callbackUrl: "/auth/redirect" })}
+        onClick={() => signIn("google", { callbackUrl })}
       >
         <Image src={googleImage} width={20} height={20} alt='google' />
         Continue with Google

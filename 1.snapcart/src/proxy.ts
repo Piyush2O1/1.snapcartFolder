@@ -12,7 +12,7 @@ export async function proxy(req:NextRequest){
     const callbackUrl=req.nextUrl.searchParams.get("callbackUrl")
 
      if(authPages.includes(pathname)){
-        if(session && callbackUrl){
+        if(session?.user?.id){
           const redirectUrl=callbackUrl ? new URL(callbackUrl,req.url) : new URL("/auth/redirect",req.url)
           if(redirectUrl.origin!==req.nextUrl.origin){
             return NextResponse.redirect(new URL("/auth/redirect",req.url))
@@ -26,7 +26,7 @@ export async function proxy(req:NextRequest){
         return NextResponse.next()
      }
 
-if(!session){
+if(!session?.user?.id || !session.user?.role){
   const loginUrl=new URL("/login",req.url)
    loginUrl.searchParams.set("callbackUrl",req.url)
    return NextResponse.redirect(loginUrl)

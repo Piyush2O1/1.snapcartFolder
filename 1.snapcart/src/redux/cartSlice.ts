@@ -22,8 +22,8 @@ interface ICartSlice{
 const initialState:ICartSlice={
    cartData:[],
    subTotal:0,
-   deliveryFee:40,
-   finalTotal:40
+   deliveryFee:0,
+   finalTotal:0
 }
 
 const cartSlice=createSlice({
@@ -61,7 +61,7 @@ const cartSlice=createSlice({
     },
     calculateTotals:(state)=>{
       state.subTotal=state.cartData.reduce((sum,item)=>sum +Number(item.price)*item.quantity,0)
-      state.deliveryFee=state.subTotal>100?0:40
+      state.deliveryFee=state.subTotal===0 ? 0 : state.subTotal>100?0:40
       state.finalTotal=state.subTotal + state.deliveryFee
     }
    }

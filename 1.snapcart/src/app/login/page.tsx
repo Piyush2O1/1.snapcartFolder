@@ -61,6 +61,7 @@ function LoginContent() {
   const [formError, setFormError] = useState<string | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get("callbackUrl") || "/auth/redirect"
 
   const errorMessage = formError || getFriendlyAuthError(searchParams.get("error"))
 
@@ -70,9 +71,20 @@ function LoginContent() {
     setFormError(null)
 
     try {
-      const callbackUrl = new URLSearchParams(window.location.search).get("callbackUrl") || "/auth/redirect"
+      const normalizedEmail = email.trim().toLowerCase()
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+        setFormError("Enter a valid email address.")
+        return
+      }
+
+      if (!password) {
+        setFormError("Enter your password.")
+        return
+      }
+
       const result = await signIn("credentials", {
-        email,
+        email: normalizedEmail,
         password,
         redirect: false,
         callbackUrl,
@@ -99,7 +111,7 @@ function LoginContent() {
     }
   }
 
-  const formValid = email !== "" && password !== ""
+  const formValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) && password !== ""
 
   return (
     <div className="relative min-h-screen overflow-hidden px-4 py-8 sm:px-6">
@@ -165,7 +177,7 @@ function LoginContent() {
             <div className="relative">
               <Mail className="absolute left-4 top-4 h-5 w-5 text-slate-400" />
               <input
-                type="text"
+                type="email"
                 placeholder="Your email"
                 className="w-full rounded-[24px] border border-white/80 bg-white/78 py-4 pl-12 pr-4 text-slate-800 outline-none focus:border-emerald-300"
                 onChange={(e) => setEmail(e.target.value)}
@@ -196,6 +208,7 @@ function LoginContent() {
             </div>
 
             <button
+              type="submit"
               disabled={!formValid || loading}
               className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3.5 font-semibold transition ${
                 formValid ? "bg-slate-950 text-white hover:bg-emerald-700" : "bg-slate-200 text-slate-500"
@@ -204,12 +217,12 @@ function LoginContent() {
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Login"}
             </button>
 
-            <GoogleSignInButton />
+            <GoogleSignInButton callbackUrl={callbackUrl} />
           </motion.form>
 
           <p
             className="mt-6 flex cursor-pointer items-center justify-center gap-2 text-sm text-slate-600 lg:justify-start"
-            onClick={() => router.push("/register")}
+            onClick={() => router.push(`/register${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`)}
           >
             Need a new account?
             <LogIn className="h-4 w-4 text-emerald-700" />
