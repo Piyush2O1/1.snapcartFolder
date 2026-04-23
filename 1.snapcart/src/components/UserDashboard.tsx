@@ -17,7 +17,7 @@ async function UserDashboard({
   const plainGrocery = JSON.parse(JSON.stringify(groceryList)) as ClientGrocery[]
 
   return (
-    <main className="min-h-screen pb-16 pt-32 sm:pb-20">
+    <main className="min-h-screen pb-16 sm:pb-20">
       <HeroSection searchQuery={searchQuery} inventoryCount={plainGrocery.length} />
       <CategorySlider />
 

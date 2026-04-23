@@ -62,7 +62,7 @@ function AdminDashboardClient({ earning, stats, chartData }: propType) {
   ]
 
   return (
-    <div className="mx-auto w-[94%] max-w-7xl pb-16 pt-32">
+    <div className="mx-auto w-[94%] max-w-7xl pb-16">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
           <p className="font-display text-sm font-bold uppercase tracking-[0.28em] text-emerald-700">

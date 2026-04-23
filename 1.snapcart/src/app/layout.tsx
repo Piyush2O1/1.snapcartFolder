@@ -6,6 +6,7 @@ import "./globals.css";
 import Provider from "@/Provider";
 import StoreProvider from "@/redux/StoreProvider";
 import InitUser from "@/InitUser";
+import RootLayoutShell from "@/components/RootLayoutShell";
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -36,8 +37,7 @@ export default function RootLayout({
         <Provider>
           <StoreProvider>
             <InitUser />
-
-            {children}
+            <RootLayoutShell>{children}</RootLayoutShell>
           </StoreProvider>
         </Provider>
       </body>
