@@ -45,6 +45,8 @@ function Checkout() {
     const [paymentMethod, setPaymentMethod] = useState<"cod" | "online">("cod")
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [checkoutError, setCheckoutError] = useState("")
+    const [onlinePaymentAvailable, setOnlinePaymentAvailable] = useState(false)
+    const [paymentConfigLoading, setPaymentConfigLoading] = useState(true)
 
     useEffect(() => {
         if (cartData.length === 0) {
@@ -70,6 +72,38 @@ function Checkout() {
             }))
         }
     }, [userData])
+
+    useEffect(() => {
+        let mounted = true
+
+        const loadPaymentConfig = async () => {
+            try {
+                const result = await axios.get("/api/user/payment/config")
+                if (mounted) {
+                    setOnlinePaymentAvailable(Boolean(result.data?.enabled))
+                }
+            } catch (error) {
+                console.log(error)
+                if (mounted) {
+                    setOnlinePaymentAvailable(false)
+                }
+            } finally {
+                if (mounted) {
+                    setPaymentConfigLoading(false)
+                }
+            }
+        }
+
+        void loadPaymentConfig()
+
+        return () => {
+            mounted = false
+        }
+    }, [])
+
+    useEffect(() => {
+        setCheckoutError("")
+    }, [paymentMethod])
 
     const handleSearchQuery = async () => {
         setSearchLoading(true)
@@ -158,6 +192,11 @@ function Checkout() {
 
     const handleOnlinePayment = async () => {
         if (!position || cartData.length === 0) {
+            return null
+        }
+
+        if (!onlinePaymentAvailable) {
+            setCheckoutError("Online payment is unavailable right now on this deployment.")
             return null
         }
 
@@ -268,14 +307,27 @@ function Checkout() {
                     <h2 className='text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2'><CreditCard className='text-green-600' /> Payment Method</h2>
                     <div className='space-y-4 mb-6'>
                         <button
-                            onClick={() => setPaymentMethod("online")}
-                            className={`flex items-center gap-3 w-full border rounded-lg p-3 transition-all ${paymentMethod === "online"
+                            type="button"
+                            onClick={() => {
+                                if (!onlinePaymentAvailable) return
+                                setPaymentMethod("online")
+                            }}
+                            disabled={!onlinePaymentAvailable || paymentConfigLoading}
+                            className={`flex items-center gap-3 w-full border rounded-lg p-3 transition-all disabled:cursor-not-allowed disabled:opacity-60 ${paymentMethod === "online"
                                 ? "border-green-600 bg-green-50 shadow-sm"
                                 : "hover:bg-gray-50"
                                 }`}>
-                            <CreditCardIcon className='text-green-600' /><span className='font-medium text-gray-700'>Pay Online (stripe)</span>
+                            <CreditCardIcon className='text-green-600' />
+                            <span className='font-medium text-gray-700'>
+                                {paymentConfigLoading
+                                    ? "Checking online payment..."
+                                    : onlinePaymentAvailable
+                                        ? "Pay Online (stripe)"
+                                        : "Pay Online (unavailable)"}
+                            </span>
                         </button>
                         <button
+                            type="button"
                             onClick={() => setPaymentMethod("cod")}
                             className={`flex items-center gap-3 w-full border rounded-lg p-3 transition-all ${paymentMethod === "cod"
                                 ? "border-green-600 bg-green-50 shadow-sm"
@@ -284,18 +336,23 @@ function Checkout() {
                             <Truck className='text-green-600' /><span className='font-medium text-gray-700'>Cash on Delivery</span>
                         </button>
                     </div>
+                    {!paymentConfigLoading && !onlinePaymentAvailable && (
+                        <div className='mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800'>
+                            Online payment is disabled because Stripe is not configured on this deployment yet.
+                        </div>
+                    )}
                     <div className='border-t pt-4 text-gray-700 space-y-2 text-sm sm:text-base'>
                         <div className='flex justify-between'>
                             <span className='font-semibold'>Subtotal</span>
-                            <span className='font-semibold text-green-600'>â‚¹{subTotal}</span>
+                            <span className='font-semibold text-green-600'>Rs. {subTotal}</span>
                         </div>
                         <div className='flex justify-between'>
                             <span className='font-semibold'>Delivery Fee</span>
-                            <span className='font-semibold text-green-600'>â‚¹{deliveryFee}</span>
+                            <span className='font-semibold text-green-600'>Rs. {deliveryFee}</span>
                         </div>
                         <div className='flex justify-between font-bold text-lg border-t pt-3'>
                             <span>Final Total</span>
-                            <span className='font-semibold text-green-600'>â‚¹{finalTotal}</span>
+                            <span className='font-semibold text-green-600'>Rs. {finalTotal}</span>
                         </div>
                     </div>
 
