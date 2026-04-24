@@ -71,6 +71,7 @@ function GroceryItemCard({ item }: { item: IGrocery }) {
 
         {!cartItem ? (
           <motion.button
+            suppressHydrationWarning
             whileTap={{ scale: 0.97 }}
             onClick={() => dispatch(addToCart({ ...item, quantity: 1 }))}
             className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
@@ -86,6 +87,7 @@ function GroceryItemCard({ item }: { item: IGrocery }) {
             className="mt-5 flex items-center justify-between rounded-full border border-emerald-200 bg-emerald-50 px-3 py-2"
           >
             <button
+              suppressHydrationWarning
               className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-emerald-700 shadow-sm transition hover:bg-emerald-100"
               onClick={() => dispatch(decreaseQuantity(item._id))}
             >
@@ -96,6 +98,7 @@ function GroceryItemCard({ item }: { item: IGrocery }) {
               <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">in cart</p>
             </div>
             <button
+              suppressHydrationWarning
               className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-emerald-700 shadow-sm transition hover:bg-emerald-100"
               onClick={() => dispatch(increaseQuantity(item._id))}
             >

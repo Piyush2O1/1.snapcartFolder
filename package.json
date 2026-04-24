@@ -1,0 +1,13 @@
+{
+  "scripts": {
+    "dev": "npm --prefix 1.snapcart run dev",
+    "dev:client": "npm --prefix 1.snapcart run dev",
+    "dev:server": "npm --prefix socketServer run dev",
+    "build": "npm --prefix 1.snapcart run build",
+    "start": "npm --prefix 1.snapcart run start",
+    "lint": "npm --prefix 1.snapcart run lint"
+  },
+  "dependencies": {
+    "stripe": "^22.0.2"
+  }
+}

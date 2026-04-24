@@ -10,7 +10,7 @@ export default async function AuthRedirectPage() {
   const session = await auth()
 
   if (!session?.user?.id) {
-    redirect("/login")
+    redirect("/login?reauth=1")
   }
 
   try {
@@ -18,7 +18,7 @@ export default async function AuthRedirectPage() {
     const user = await User.findById(session.user.id)
 
     if (!user) {
-      redirect("/login")
+      redirect("/login?reauth=1")
     }
 
     redirect(
@@ -29,7 +29,7 @@ export default async function AuthRedirectPage() {
     )
   } catch (error) {
     if (isDatabaseUnavailable(error)) {
-      redirect("/login?error=database_unavailable")
+      redirect("/login?error=database_unavailable&reauth=1")
     }
 
     throw error

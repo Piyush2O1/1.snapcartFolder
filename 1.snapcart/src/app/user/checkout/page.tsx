@@ -348,7 +348,7 @@ function Checkout() {
                                 {paymentConfigLoading
                                     ? "Checking online payment..."
                                     : onlinePaymentAvailable
-                                        ? "Pay Online (stripe)"
+                                        ? "Pay Online (Card / UPI)"
                                         : "Pay Online (unavailable)"}
                             </span>
                         </button>
@@ -400,7 +400,7 @@ function Checkout() {
                             }
                         }}
                     >
-                        {isSubmitting ? "Please wait..." : paymentMethod == "cod" ? "Place Order" : "pay & Place Order"}
+                        {isSubmitting ? "Please wait..." : paymentMethod == "cod" ? "Place Order" : "Pay & Place Order"}
                     </motion.button>
                 </motion.div>
             </div>

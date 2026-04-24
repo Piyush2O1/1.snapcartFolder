@@ -30,8 +30,8 @@ function Footer({ role = "guest" }: { role?: Role }) {
             ]
           : [
               { label: "Home", href: "/" },
-              { label: "Login", href: "/login" },
-              { label: "Sign Up", href: "/register" },
+              { label: "Login", href: "/login?reauth=1" },
+              { label: "Sign Up", href: "/register?reauth=1" },
             ]
 
   return (

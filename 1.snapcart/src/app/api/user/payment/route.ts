@@ -67,7 +67,6 @@ export async function POST(req: NextRequest) {
 
         const stripe = getStripeClient()
         const stripeSession = await stripe.checkout.sessions.create({
-            payment_method_types: ["card"],
             mode: "payment",
             customer_email: user.email || undefined,
             success_url: `${process.env.NEXT_BASE_URL}/user/orders/success?session_id={CHECKOUT_SESSION_ID}&orderId=${newOrder._id.toString()}`,

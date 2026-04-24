@@ -85,13 +85,13 @@ function PublicLanding() {
 
           <div className="flex items-center gap-3">
             <Link
-              href="/login"
+              href="/login?reauth=1"
               className="rounded-full border border-white/70 bg-white/60 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white"
             >
               Login
             </Link>
             <Link
-              href="/register"
+              href="/register?reauth=1"
               className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
             >
               Sign Up
@@ -124,14 +124,14 @@ function PublicLanding() {
 
             <div className="flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/register"
+                href="/register?reauth=1"
                 className="shine-sweep inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-6 py-3.5 text-base font-semibold text-white transition hover:bg-emerald-700"
               >
                 Start with Quick Basket
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                href="/login"
+                href="/login?reauth=1"
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white/65 px-6 py-3.5 text-base font-semibold text-slate-700 transition hover:border-emerald-300 hover:text-emerald-800"
               >
                 Existing team login
@@ -419,13 +419,13 @@ function PublicLanding() {
 
               <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
                 <Link
-                  href="/register"
+                  href="/register?reauth=1"
                   className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 font-semibold text-slate-950 transition hover:bg-emerald-200"
                 >
                   Create account
                 </Link>
                 <Link
-                  href="/login"
+                  href="/login?reauth=1"
                   className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-6 py-3 font-semibold text-white transition hover:bg-white/16"
                 >
                   Login
